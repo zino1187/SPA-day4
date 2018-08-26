@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>사원관리 SPA(Single Page Application)</title>
+<style>
+.wrapper{
+	width:100%;
+	height:600px;
+	border:2px solid navy;
+	margin:auto;
+	overflow:hidden;
+}
+.form{
+	width:20%;
+	height:100%;
+	float:left;
+}
+.list{
+	width:60%;
+	height:100%;
+	float:left;
+}
+.detail{
+	width:20%;
+	height:100%;
+	background:dodgerblue;
+	float:left;
+}
+input, select{
+	width:98%;
+	font-size:20px;
+	margin:3px 0px;
+}
+</style>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script crossorigin src="https://unpkg.com/react@16/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@16/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+<script>
+$(function(){
+	//부서정보 조회하기!!
+	getDept();
+
+	//jquery 는 css의 선택자를 따르므로, 아래와 같은 표현이 당연히 가능하다..
+	$("button:nth-child(1)").click(function(){
+		regist();
+	});
+
+	$("button:nth-child(2)").click(function(){
+		alert();
+	});
+
+});
+
+//부서정보를 가져오되, 비동기방식인 ajax로 가져오자!!!
+function getDept(){
+	$.get("/dept/list", function(data, status){
+		console.log(data);
+		//데이터가 문자열로 전송되어 왔기 때문에, 다시 객체로 변환하자
+		//왜 그래야 하나?? 객체로 취급되면 객체.변수를 접근하기에 편하다..
+		//그렇지만, ajaX에서 data 변수에는 이미 파싱된 결과가 들어왔기때문에
+		//이때는 생략하자...
+		//alert(data);{deptno: 2, dname: "리서치", loc: "대전"}
+		for(var i=0;i<data.length;i++){
+			$("#deptno")	.append("<option>"+data[i].dname+"</option>");	
+		}	
+	});
+}
+
+//유효성을 먼저 체크한 후 , 유효한 데이터를 서버에 전송하되,
+//post 로 전송하자, 단 비동기로..(왜?? without whole page reloading...)
+function regist(){
+	if(!$("#name").val()){
+		alert("사원명을 입력하세요");
+		$("#name").focus();
+	}else if(!$("#id").val()){
+		alert("아이디를 입력하세요");
+		$("#id").focus();
+	}else if($("#deptno").val()=="0"){
+		alert("부서를 선택하세요");
+		$("#deptno").focus();
+	}else{
+		//서버에 전송!! with ajax...
+		alert("서버에 전송할 예정입니다");
+		//서버에 요청후 서버로부터 전송된 데이터는 익명함수로
+		//받을 수 있다...
+		//data : 서버에서 전송된 데이터, 
+		//status  : 서버에서 전송한 응답코드 (ex - 200 성공, 500 서버오류..)
+		
+		$.post("/emp/regist", function(data, status){
+		
+		});
+	}		
+}
+</script>
+</head>
+<body>
+	<div class="wrapper">
+		<div class="form">
+			<form id="form1">
+				<div>
+					<input type="text" placeholder="사원명 입력" id="name" name="name">
+				</div>
+				<div>
+					<input type="text" placeholder="아이디 입력" id="id" name="id">
+				</div>
+				<div>
+					<select id="deptno" name="deptno">
+						<option value="0">부서 선택</option>
+						<option value="1">영업부</option>
+					</select>
+				</div>
+			</form>
+			<div>
+				<button>등록</button>
+				<button>결과보기</button>
+			</div>
+		</div>
+		<div class="list"></div>
+		<div class="detail"></div>
+	</div>
+</body>
+</html>
