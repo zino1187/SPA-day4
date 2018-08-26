@@ -14,6 +14,7 @@
 .form{
 	width:20%;
 	height:100%;
+	background:orange;
 	float:left;
 }
 .list{
@@ -37,7 +38,29 @@ input, select{
 <script crossorigin src="https://unpkg.com/react@16/umd/react.production.min.js"></script>
 <script crossorigin src="https://unpkg.com/react-dom@16/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
-<script>
+<script type="text/babel">
+var empArray=[];
+
+//컴포넌트 정의...
+class Record extends React.Component{
+	constructor(props){
+		super(props);
+	}
+
+	render(){
+		return (
+			<tr>
+				<td>{this.props.empno}</td>
+				<td>{this.props.ename}</td>
+				<td>{this.props.id}</td>
+				<td>{this.props.deptno}</td>
+				<td>{this.props.dname}</td>
+				<td>{this.props.loc}</td>
+			</tr>
+		);
+	}
+}
+
 $(function(){
 	//부서정보 조회하기!!
 	getDept();
@@ -48,7 +71,7 @@ $(function(){
 	});
 
 	$("button:nth-child(2)").click(function(){
-		alert();
+		getList();
 	});
 
 });
@@ -63,7 +86,7 @@ function getDept(){
 		//이때는 생략하자...
 		//alert(data);{deptno: 2, dname: "리서치", loc: "대전"}
 		for(var i=0;i<data.length;i++){
-			$("#deptno")	.append("<option>"+data[i].dname+"</option>");	
+			$("#deptno")	.append("<option value='"+data[i].deptno+"'>"+data[i].dname+"</option>"); 
 		}	
 	});
 }
@@ -82,17 +105,52 @@ function regist(){
 		$("#deptno").focus();
 	}else{
 		//서버에 전송!! with ajax...
-		alert("서버에 전송할 예정입니다");
+		//alert("서버에 전송할 예정입니다");
 		//서버에 요청후 서버로부터 전송된 데이터는 익명함수로
 		//받을 수 있다...
 		//data : 서버에서 전송된 데이터, 
 		//status  : 서버에서 전송한 응답코드 (ex - 200 성공, 500 서버오류..)
-		
-		$.post("/emp/regist", function(data, status){
-		
+		var name=$("#name").val();
+		var id=$("#id").val();
+		var deptno=$("#deptno").val();
+
+		$.post("/emp/regist" ,{  
+			name:name,
+			id:id,
+			deptno:deptno
+		}, function(data, status){
+			var obj=JSON.parse(data); // 문자열화된 json 을 객체로 변환!!
+			
+			//alert("서버가 처리한 결과는 "+obj.result);
+			if(obj.result=="success"){
+				alert("등록성공");
+			}else{
+				alert("등록실패");
+			}
 		});
 	}		
 }
+
+//ajax  비동기방식으로 사원의 정보를 출력하자!!
+function getList(){
+	$.get("/emp/list", function(data, status){
+		var obj=JSON.parse(data);
+
+		//배열에 담겨진 json 을 반복문 돌려서, 화면에 출력하되, 가상DoM 기술을
+		//쓰는 react로 구현해보자!! ( 컴포넌트 이용하여...)
+		showTag(obj);
+	});
+}
+
+function showTag(json){
+	empArray.push(<table width={100+"px"} border={1+"px"}>);
+	empArray.push(<Record empno={json[0].empno} ename={json[0].ename} id={json[0].id} deptno={json[0].deptno} dname={json[0].dname} loc={json[0].loc}/>);		
+	empArray.push(</table>);
+	
+	ReactDOM.render(empArray , document.getElementById("list"));
+	
+}
+
 </script>
 </head>
 <body>
@@ -108,7 +166,6 @@ function regist(){
 				<div>
 					<select id="deptno" name="deptno">
 						<option value="0">부서 선택</option>
-						<option value="1">영업부</option>
 					</select>
 				</div>
 			</form>
@@ -117,7 +174,7 @@ function regist(){
 				<button>결과보기</button>
 			</div>
 		</div>
-		<div class="list"></div>
+		<div class="list" id="list"></div>
 		<div class="detail"></div>
 	</div>
 </body>

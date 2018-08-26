@@ -66,13 +66,60 @@ app.get("/dept/list", function(request, response){
 
 //사원 등록 요청 처리 
 app.post("/emp/regist", function(request, response){
+	console.log(request.body); //json으로 파라미터를 받는다!!
+
+	var name=request.body.name;
+	var id=request.body.id;
+	var deptno=request.body.deptno;
+
 	pool.getConnection(function(error, con){
 		if(error){
 			console.log("접속 객체 얻기 실패", error);
 		}else{
 			console.log("접속 객체 얻어옴!!");
+			
+			var sql="insert into emp(ename, id, deptno) values(?,?,?)";
+
+			con.query(sql, [name, id, deptno], function(err, result){
+
+				response.writeHead(200, {"Content-Type":"text/html"});
+
+				if(err){
+					console.log(err, "등록실패");
+					response.end("{\"result\":\"fail\"}");
+				}else{
+					console.log("등록성공");
+					response.end("{\"result\":\"success\"}");
+				}
+				con.release();
+			});
+
 		}
 	});
+});
+
+//사원 목록 요청 처리 
+app.get("/emp/list" , function(request, response){
+	pool.getConnection(function(error, con){
+		if(error){
+			console.log(error);
+		}else{
+			var sql="select empno, ename,id,e.deptno,dname,loc";	
+			sql+=" from emp e, dept d";
+			sql+=" where e.deptno=d.deptno";
+
+			con.query(sql, function(err, result, fields){
+				if(err){
+					console.log(err);
+				}else{
+					response.writeHead(200,{"Content-Type":"text/html"});
+					response.end(JSON.stringify(result));
+				}
+				con.release();//반납
+			});
+		}
+	});
+
 });
 
 server.listen(8888, function(){
