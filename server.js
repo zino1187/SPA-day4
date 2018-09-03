@@ -122,6 +122,89 @@ app.get("/emp/list" , function(request, response){
 
 });
 
+//사원 상세보기 요청 처리 
+app.get("/emp/detail", function(request, response){
+	//post : request.body 
+	//get : request.query 
+	console.log("상세보기 요청 파라미터", request.query);
+	var empno=request.query.empno;
+
+	pool.getConnection(function(error, con){
+		if(error){
+			console.log(error);
+		}else{
+			var sql="select * from emp where empno=?";
+			con.query(sql,[empno], function(err, result, fields){
+				if(err){
+					console.log(err);
+				}else{
+					response.writeHead(200,{"Content-Type":"text/json"});
+					response.end(JSON.stringify(result)); //문자열화 시켜 전송
+				}
+			});
+			con.release();		
+		}	
+	});
+
+});
+
+//삭제 요청 처리 
+app.get("/emp/del", function(request, response){
+	var empno=request.query.empno; //get 방식일땐 query로...
+	console.log("넘겨받은 empno는 ", empno);
+
+	pool.getConnection(function(error, con){
+		if(error){
+			console.log(error);
+		}else{
+			var sql="delete from emp where empno=?";
+			con.query(sql, [empno], function(err, result){
+				if(err){
+					console.log(err);
+					response.writeHead(200, {"Content-Type":"text/plain"});
+					response.end("fail");
+				}else{
+					//다 지워짐...
+					response.writeHead(200, {"Content-Type":"text/plain"});
+					response.end("success");
+				}
+			});
+			con.release();
+		}
+	});
+
+});
+
+//수정 요청 처리
+app.post("/emp/edit", function(request, response){
+	var ename=request.body.ename;
+	var id=request.body.id;
+	var empno=request.body.empno;
+
+	console.log(ename, id, empno);
+
+	pool.getConnection(function(error, con ){
+		if(error){
+			console.log(error);
+		}else{
+			var sql="update emp set ename=? , id=? where empno=?";
+			con.query(sql,[ename, id, empno] , function(err, result){
+				if(err){
+					console.log(err);
+					response.writeHead(500,{"Content-Type":"text/plain"});
+					response.end("fail");
+				}else{
+					response.writeHead(200,{"Content-Type":"text/plain"});
+					response.end("ok");
+				}
+			});
+		}		
+		con.release();//connect 객체 반납
+	});
+
+});
+
+
 server.listen(8888, function(){
 	console.log("웹서버가 8888포트에서 실행중...");
 });

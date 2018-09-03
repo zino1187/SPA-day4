@@ -45,11 +45,30 @@ var empArray=[];
 class Record extends React.Component{
 	constructor(props){
 		super(props);
+
 	}
 
 	render(){
+		//ECMScript 2015 부터는 화살표함수가 지원된다...
+		//화살표함수를 이용하면 this 키워드를 익명함수 내에서도 사용할 수 있다..
+		var myHandler=(e)=>{
+			//alert(this.props.ename+" 눌렀어?");
+			getDetail(this.props.empno);
+
+			
+		}
+
+		//이벤트 처리 핸들러 함수 정의 , 인수로 전달되는 e는 바로 이벤트 객체
+		/*
+		var myHandler=function(e){
+			alert("눌렀어?");
+		}
+		*/
+
 		return (
-			<tr>
+			/* React의 컴포넌트 영역에서 이벤트를 구현할때는 on다음에 위치할 단어의
+			첫 철자는 반드시 대문자로 써야한다.. */
+			<tr onClick={myHandler}>
 				<td>{this.props.empno}</td>
 				<td>{this.props.ename}</td>
 				<td>{this.props.id}</td>
@@ -64,14 +83,27 @@ class Record extends React.Component{
 $(function(){
 	//부서정보 조회하기!!
 	getDept();
+	getList();
 
 	//jquery 는 css의 선택자를 따르므로, 아래와 같은 표현이 당연히 가능하다..
-	$("button:nth-child(1)").click(function(){
+	$(".form button:nth-child(1)").click(function(){
 		regist();
 	});
 
-	$("button:nth-child(2)").click(function(){
+	$(".form button:nth-child(2)").click(function(){
 		getList();
+	});
+
+	$(".detail button:nth-child(1)").click(function(){
+		if(confirm($("#empno").val()+" 를 삭제하시겠습니까?")){
+			del($("#empno").val());
+		}
+	});
+
+	$(".detail button:nth-child(2)").click(function(){
+		if(confirm($("#empno").val()+" 를 수정하시겠습니까?")){
+			edit();
+		}
 	});
 
 });
@@ -142,12 +174,60 @@ function getList(){
 	});
 }
 
+
+/*상세보기 요청 , 단 SPA 이므로 요청은 비동기로 진행한다!!*/
+function getDetail(empno){
+	//alert(empno+" 의 정보를 원하세요?");
+
+	//empno 는 서버측에 전송되어야 함...
+	$.get("/emp/detail",{"empno":empno}, function(data, status){
+		//alert(data);				
+		//form2 영역에 데이터 출력하기!!
+		
+		var obj=data[0]; //json 객체 추출!!
+		$("#empno").val(obj.empno); //hidden 에 값 넣기!!
+		$("#name2").val(obj.ename);
+		$("#id2").val(obj.id);		
+	});
+}
+
+//삭제요청
+function del(empno){
+	//비동기 요청 
+	$.get("/emp/del", {"empno":empno}, function(data, status){
+		if(data=="fail"){
+			alert("삭제 실패 ㅜㅜ");
+		}else{
+			alert("삭제 성공");
+			window.location.reload();//페이지 리로드!!
+			
+		}
+	});
+}
+
+//수정 요청 
+function edit(){
+	//post로 전송한다!!  파라미터, 사원명, 아이디, empno
+	$.post("/emp/edit", {
+			"ename":$("#name2").val(),
+			"id": $("#id2").val(), 
+			"empno":$("#empno").val() 
+		}, function(data, status){
+			if(status=="success"){  //success == 200에 매칭되는 상수
+				alert("수정성공");
+			}else{
+				alert("수정실패");
+			}
+	});
+}
+
 function showTag(json){
-	empArray.push(<table width={100+"px"} border={1+"px"}>);
-	empArray.push(<Record empno={json[0].empno} ename={json[0].ename} id={json[0].id} deptno={json[0].deptno} dname={json[0].dname} loc={json[0].loc}/>);		
-	empArray.push(</table>);
+
+	for(var i=0; i<json.length;i++){
+		empArray.push(<Record empno={json[i].empno} ename={json[i].ename} id={json[i].id} deptno={json[i].deptno} dname={json[i].dname} loc={json[i].loc}/>);	
+	}
 	
-	ReactDOM.render(empArray , document.getElementById("list"));
+	ReactDOM.render(empArray , document.getElementById("table"));
 	
 }
 
@@ -174,8 +254,24 @@ function showTag(json){
 				<button>결과보기</button>
 			</div>
 		</div>
-		<div class="list" id="list"></div>
-		<div class="detail"></div>
+		<div class="list" id="list">
+			<table width="100%" border="1px" id="table"></table>
+		</div>
+		<div class="detail">
+			<form id="form2">
+				<input type="hidden" id="empno" name="empno">
+				<div>
+					<input type="text" id="name2" name="name2">
+				</div>
+				<div>
+					<input type="text" id="id2" name="id2">
+				</div>
+			</form>
+			<div>
+				<button>삭제</button>
+				<button>수정</button>
+			</div>
+		</div>
 	</div>
 </body>
 </html>
